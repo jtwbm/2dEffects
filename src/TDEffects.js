@@ -14,6 +14,13 @@ class TDCanvas {
   }
 }
 
+class TDVector2 {
+  constructor() {
+    this.x = 0
+    this.y = 0
+  }
+}
+
 class TDEffects {
   constructor(target) {
     const targetEl = document.querySelector(target)
@@ -32,11 +39,39 @@ class TDEffects {
     this.elements = []
 
     this.config = {
-      count: 200,
+      count: 300,
     }
   }
 
   generateElements() {
+    // const SAMPLES_BEFORE_REJECTION = 30
+    // const pointRadius = 30
+    // const cellSize = this.radius / Math.sqrt(2)
+    // const points = []
+    // const spawnPoints = []
+
+    // spawnPoints.push(this.width / 2)
+
+    // while (spawnPoints.length) {
+    //   const spawnIndex = this.minMaxRandom(0, spawnPoints.length)
+    //   const spawnCentre = spawnPoints[spawnIndex]
+
+    //   for (let i = 0; i < SAMPLES_BEFORE_REJECTION; i++) {
+    //     const randomAngle = Math.random() * Math.PI * 2
+    //     const direction = [Math.sin(randomAngle), Math.cos(randomAngle)]
+    //     const radiusRange = this.minMaxRandom(pointRadius, pointRadius * 2)
+    //     const candidatePoint = [
+    //       spawnCentre[0] + direction[0] * radiusRange,
+    //       spawnCentre[1] + direction[1] * radiusRange,
+    //     ]
+    //   }
+    // }
+
+    // for (let i = 0; i < Math.ceil(this.width / cellSize); i++) {
+    //   for (let j = 0; i < Math.ceil(this.height / cellSize); j++) {
+    //   }
+    // }
+
     for (let n = 0; n < this.config.count; n++) {
       const newElement = new TDCircle({
         ctx: this.canvas.ctx,
@@ -63,9 +98,12 @@ class TDEffects {
 }
 
 class TDCircle {
-  constructor({ ctx, position }) {
+  constructor({
+    ctx,
+    position,
+  }) {
     this.ctx = ctx
-    this.radius = 10
+    this.radius = 20
     this.color = '#444444'
     this.opacity = 1
     this.position = position
