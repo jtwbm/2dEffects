@@ -24,11 +24,26 @@
   </style>
 </head>
 <body>
-  <div id="TDEffects-container"></div>
+  <!-- <div id="TDEffects-container"></div> -->
 
-  <script src="./src/TDEffects.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+
+  <!-- <script src="./src/TDEffects.js"></script>
   <script>
     new TDEffects('#TDEffects-container')
+  </script> -->
+
+  <script src="./src/Poisson.js"></script>
+  <script>
+    const poisson = new Poisson();
+
+    function setup() {
+      poisson.setup();
+    }
+
+    function draw() {
+      poisson.draw();
+    }
   </script>
 </body>
 </html>
