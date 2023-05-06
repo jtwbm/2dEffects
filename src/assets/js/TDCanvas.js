@@ -12,6 +12,7 @@ export class TDCanvas {
 
   sketch(s) {
     s.setup = () => {
+      s.frameRate(3);
       s.createCanvas(600, 600);
       s.background('rgba(255, 255, 255, 0)');
       s.strokeWeight(4);
@@ -23,8 +24,9 @@ export class TDCanvas {
     };
 
     s.draw = () => {
+      s.clear()
       s.background('rgba(255, 255, 255, 0)');
-      s.noLoop();
+      // s.noLoop();
 
       this.draw(s);
     };

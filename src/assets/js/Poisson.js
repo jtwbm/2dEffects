@@ -14,6 +14,8 @@ export class Poisson {
     this.gridColumns = 0;
     this.gridRows = 0;
 
+    this.status = 'initial';
+
     this.canvas = new TDCanvas({
       setup: this.setup.bind(this),
       draw: this.draw.bind(this),
@@ -23,28 +25,30 @@ export class Poisson {
   }
 
   setup(s) {
-    // initialize grid
-    this.gridColumns = s.floor(this.canvas.width / this.cellWidth);
-    this.gridRows = s.floor(this.canvas.height / this.cellWidth);
-  
-    this.grid.length = this.gridColumns * this.gridRows;
-    this.grid.fill(-1);
-  
+    this.generateGrid(s);
+
     // get 1st random point
-    const x = s.random(this.canvas.width);
-    const y = s.random(this.canvas.height);
-    const i = s.floor(x / this.cellWidth);
-    const j = s.floor(y / this.cellWidth);
-    const position = s.createVector(x, y);
-    const cellIndex = i + j * this.gridColumns;
+    const { position, index } = this.getRandomPosition(s);
   
     // add point to grid arrays
-    this.grid[cellIndex] = position;
+    this.grid[index] = position;
     this.activePoints.push(position);
-    this.pointsAttempts[cellIndex] = 1;
+    this.pointsAttempts[index] = 1;
   }
 
   draw(s) {
+    if (this.status === 'ready') {
+      for (let i = 0; i < this.grid.length; i++) {
+        if (this.grid[i] === -1) continue;
+
+        this.grid[i].x += 1;
+        this.grid[i].y += 1;
+
+        this.drawPoint(s, i);
+      }
+      return
+    }
+
     while (this.activePoints.length > 0) {
       const randomPointIndex = s.floor(s.random(this.activePoints.length));
       const position = this.activePoints[randomPointIndex];
@@ -93,13 +97,42 @@ export class Poisson {
         this.activePoints.splice(randomPointIndex, 1);
       }
     }
+
+    this.status = 'ready';
   
     for (let i = 0; i < this.grid.length; i++) {
-      if (this.grid[i] === -1) continue;
-  
-      s.stroke(this.pointsAttempts[i] * 10);
-      s.strokeWeight(5);
-      s.point(this.grid[i].x, this.grid[i].y);
+      this.drawPoint(s, i);
     }
+  }
+
+  generateGrid(s) {
+    // initialize grid
+    this.gridColumns = s.floor(this.canvas.width / this.cellWidth);
+    this.gridRows = s.floor(this.canvas.height / this.cellWidth);
+
+    this.grid.length = this.gridColumns * this.gridRows;
+    this.grid.fill(-1);
+  }
+
+  drawPoint(s, i) {
+    if (this.grid[i] === -1) return;
+
+    s.stroke(this.pointsAttempts[i] * 10);
+    s.strokeWeight(5);
+    s.point(this.grid[i].x, this.grid[i].y);
+  }
+
+  getRandomPosition(s) {
+    const x = s.random(this.canvas.width);
+    const y = s.random(this.canvas.height);
+    const i = s.floor(x / this.cellWidth);
+    const j = s.floor(y / this.cellWidth);
+    const position = s.createVector(x, y);
+    const cellIndex = i + j * this.gridColumns;
+
+    return {
+      position,
+      index: cellIndex,
+    };
   }
 }
