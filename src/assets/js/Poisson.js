@@ -1,4 +1,5 @@
 import p5 from 'p5';
+import { TDCanvas } from './TDCanvas';
 
 export class Poisson {
   constructor() {
@@ -13,37 +14,25 @@ export class Poisson {
     this.gridColumns = 0;
     this.gridRows = 0;
 
-    new p5(this.sketch.bind(this));
-  }
+    this.canvas = new TDCanvas({
+      setup: this.setup.bind(this),
+      draw: this.draw.bind(this),
+    });
 
-  sketch(s) {
-    s.setup = () => {
-      s.createCanvas(600, 600);
-      s.background('rgba(255, 255, 255, 0)');
-      s.strokeWeight(4);
-
-      this.setup(s);
-    };
-
-    s.draw = () => {
-      s.background('rgba(255, 255, 255, 0)');
-      s.noLoop();
-
-      this.draw(s);
-    };
+    this.canvas.startAnimation();
   }
 
   setup(s) {
     // initialize grid
-    this.gridColumns = s.floor(s.width / this.cellWidth);
-    this.gridRows = s.floor(s.height / this.cellWidth);
+    this.gridColumns = s.floor(this.canvas.width / this.cellWidth);
+    this.gridRows = s.floor(this.canvas.height / this.cellWidth);
   
     this.grid.length = this.gridColumns * this.gridRows;
     this.grid.fill(-1);
   
     // get 1st random point
-    const x = s.random(s.width);
-    const y = s.random(s.height);
+    const x = s.random(this.canvas.width);
+    const y = s.random(this.canvas.height);
     const i = s.floor(x / this.cellWidth);
     const j = s.floor(y / this.cellWidth);
     const position = s.createVector(x, y);
