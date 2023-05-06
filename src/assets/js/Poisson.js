@@ -1,4 +1,6 @@
-class Poisson {
+import p5 from 'p5';
+
+export class Poisson {
   constructor() {
     this.attempts = 25;
     this.radius = 20;
@@ -10,26 +12,41 @@ class Poisson {
 
     this.gridColumns = 0;
     this.gridRows = 0;
+
+    new p5(this.sketch.bind(this));
   }
 
-  setup() {
-    createCanvas(600, 600);
-    background(55);
-    strokeWeight(4);
-  
+  sketch(s) {
+    s.setup = () => {
+      s.createCanvas(600, 600);
+      s.background('rgba(255, 255, 255, 0)');
+      s.strokeWeight(4);
+
+      this.setup(s);
+    };
+
+    s.draw = () => {
+      s.background('rgba(255, 255, 255, 0)');
+      s.noLoop();
+
+      this.draw(s);
+    };
+  }
+
+  setup(s) {
     // initialize grid
-    this.gridColumns = floor(width / this.cellWidth);
-    this.gridRows = floor(height / this.cellWidth);
+    this.gridColumns = s.floor(s.width / this.cellWidth);
+    this.gridRows = s.floor(s.height / this.cellWidth);
   
     this.grid.length = this.gridColumns * this.gridRows;
     this.grid.fill(-1);
   
     // get 1st random point
-    const x = random(width);
-    const y = random(height);
-    const i = floor(x / this.cellWidth);
-    const j = floor(y / this.cellWidth);
-    const position = createVector(x, y);
+    const x = s.random(s.width);
+    const y = s.random(s.height);
+    const i = s.floor(x / this.cellWidth);
+    const j = s.floor(y / this.cellWidth);
+    const position = s.createVector(x, y);
     const cellIndex = i + j * this.gridColumns;
   
     // add point to grid arrays
@@ -38,26 +55,23 @@ class Poisson {
     this.pointsAttempts[cellIndex] = 1;
   }
 
-  draw() {
-    background(0);
-    noLoop();
-  
+  draw(s) {
     while (this.activePoints.length > 0) {
-      const randomPointIndex = floor(random(this.activePoints.length));
+      const randomPointIndex = s.floor(s.random(this.activePoints.length));
       const position = this.activePoints[randomPointIndex];
       let pointFounded = false;
   
       for (let n = 0; n < this.attempts; n++) {
         // generate random point
         const candidate = p5.Vector.random2D();
-        const magnitude = random(this.radius, this.radius * 2);
+        const magnitude = s.random(this.radius, this.radius * 2);
   
         candidate.setMag(magnitude);
         candidate.add(position);
   
         // get point index in grid
-        const columnIndex = floor(candidate.x / this.cellWidth);
-        const rowIndex = floor(candidate.y / this.cellWidth);
+        const columnIndex = s.floor(candidate.x / this.cellWidth);
+        const rowIndex = s.floor(candidate.y / this.cellWidth);
         const cellFilled = this.grid[columnIndex + rowIndex * this.gridColumns] !== -1;
         const isInsideGrid = columnIndex > -1 && rowIndex > -1 && columnIndex < this.gridColumns && rowIndex < this.gridRows;
   
@@ -94,9 +108,9 @@ class Poisson {
     for (let i = 0; i < this.grid.length; i++) {
       if (this.grid[i] === -1) continue;
   
-      stroke(this.pointsAttempts[i] * 10);
-      strokeWeight(5);
-      point(this.grid[i].x, this.grid[i].y);
+      s.stroke(this.pointsAttempts[i] * 10);
+      s.strokeWeight(5);
+      s.point(this.grid[i].x, this.grid[i].y);
     }
   }
 }
