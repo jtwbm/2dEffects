@@ -1,23 +1,6 @@
 import p5 from 'p5';
 import { TDCanvas } from './TDCanvas';
-
-class Point {
-  constructor({
-    position,
-    index,
-  }) {
-    this.position = position || { x: 0, y: 0 };
-    this.index = index || -1;
-  }
-
-  draw(s) {
-    if (this.index === -1) return;
-
-    s.stroke(10);
-    s.strokeWeight(5);
-    s.point(this.position.x, this.position.y);
-  }
-}
+import { Point } from './Point';
 
 export class Poisson {
   constructor() {
@@ -53,63 +36,63 @@ export class Poisson {
     this.activePoints.push(point.position);
   }
 
+  generateNeighbors(s, position) {
+    for (let n = 0; n < this.attempts; n++) {
+      // generate random point
+      const candidate = p5.Vector.random2D();
+      const magnitude = s.random(this.radius, this.radius * 2);
+
+      candidate.setMag(magnitude);
+      candidate.add(position);
+
+      // get point index in grid
+      const columnIndex = s.floor(candidate.x / this.cellWidth);
+      const rowIndex = s.floor(candidate.y / this.cellWidth);
+      const cellFilled = this.grid[columnIndex + rowIndex * this.gridColumns] !== -1;
+      const isInsideGrid = columnIndex > -1 && rowIndex > -1 && columnIndex < this.gridColumns && rowIndex < this.gridRows;
+
+      if (isInsideGrid && !cellFilled) {
+        // check points around
+        let isGoodPoint = true; // the candidate is far enough from neighbors
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const neighborIndex = (columnIndex + i) + (rowIndex + j) * this.gridColumns;
+            const neighborPoint = this.grid[neighborIndex];
+
+            if (neighborPoint === undefined || neighborPoint === -1) continue;
+
+            const distanceBetweenPoints = p5.Vector.dist(candidate, neighborPoint.position);
+            if (distanceBetweenPoints < this.radius) {
+              isGoodPoint = false;
+            }
+          }
+        }
+
+        if (isGoodPoint) {
+          // add new point
+          const newPoint = new Point({
+            index: columnIndex + rowIndex * this.gridColumns,
+            position: candidate,
+          });
+
+          this.addPoint(newPoint);
+        }
+      }
+    }
+  }
+
   poissonPoints(s) {
     // add 1st random point
     const { position, index } = this.getRandomPosition(s);
     const firstPoint = new Point({ position, index });
     this.addPoint(firstPoint);
 
-    // search other points
     while (this.activePoints.length > 0) {
       const randomPointIndex = s.floor(s.random(this.activePoints.length));
       const position = this.activePoints[randomPointIndex];
-      let pointFounded = false;
-  
-      for (let n = 0; n < this.attempts; n++) {
-        // generate random point
-        const candidate = p5.Vector.random2D();
-        const magnitude = s.random(this.radius, this.radius * 2);
-  
-        candidate.setMag(magnitude);
-        candidate.add(position);
-  
-        // get point index in grid
-        const columnIndex = s.floor(candidate.x / this.cellWidth);
-        const rowIndex = s.floor(candidate.y / this.cellWidth);
-        const cellFilled = this.grid[columnIndex + rowIndex * this.gridColumns] !== -1;
-        const isInsideGrid = columnIndex > -1 && rowIndex > -1 && columnIndex < this.gridColumns && rowIndex < this.gridRows;
-  
-        if (isInsideGrid && !cellFilled) {
-          // check points around
-          let isGoodPoint = true; // the candidate is far enough from neighbors
-          for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-              const neighborIndex = (columnIndex + i) + (rowIndex + j) * this.gridColumns;
-              const neighborPoint = this.grid[neighborIndex];
 
-              if (neighborPoint === undefined || neighborPoint === -1) continue;
-
-              const distanceBetweenPoints = p5.Vector.dist(candidate, neighborPoint.position);
-              if (distanceBetweenPoints < this.radius) {
-                isGoodPoint = false;
-              }
-            }
-          }
-  
-          if (isGoodPoint) {
-            // add new point
-            const newPoint = new Point({
-              index: columnIndex + rowIndex * this.gridColumns,
-              position: candidate,
-            });
-            this.addPoint(newPoint);
-          }
-        }
-      }
-  
-      if (!pointFounded) {
-        this.activePoints.splice(randomPointIndex, 1);
-      }
+      this.generateNeighbors(s, position);
+      this.activePoints.splice(randomPointIndex, 1);
     }
   }
 
