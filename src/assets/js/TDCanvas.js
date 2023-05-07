@@ -6,7 +6,7 @@ export class TDCanvas {
     this.draw = draw;
   }
 
-  startAnimation() {
+  init() {
     new p5(this.sketch.bind(this));
   }
 
@@ -26,7 +26,7 @@ export class TDCanvas {
     s.draw = () => {
       s.clear()
       s.background('rgba(255, 255, 255, 0)');
-      // s.noLoop();
+      s.noLoop();
 
       this.draw(s);
     };

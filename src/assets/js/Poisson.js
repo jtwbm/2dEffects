@@ -1,6 +1,24 @@
 import p5 from 'p5';
 import { TDCanvas } from './TDCanvas';
 
+class Point {
+  constructor({
+    position,
+    index,
+  }) {
+    this.position = position || { x: 0, y: 0 };
+    this.index = index || -1;
+  }
+
+  draw(s) {
+    if (this.index === -1) return;
+
+    s.stroke(10);
+    s.strokeWeight(5);
+    s.point(this.position.x, this.position.y);
+  }
+}
+
 export class Poisson {
   constructor() {
     this.attempts = 25;
@@ -9,46 +27,39 @@ export class Poisson {
 
     this.grid = [];
     this.activePoints = [];
-    this.pointsAttempts = [];
 
     this.gridColumns = 0;
     this.gridRows = 0;
 
-    this.status = 'initial';
-
     this.canvas = new TDCanvas({
-      setup: this.setup.bind(this),
-      draw: this.draw.bind(this),
+      setup: (s) => {
+        this.generateGrid(s);
+        this.poissonPoints(s);
+      },
+      draw: (s) => {
+        for (let i = 0; i < this.grid.length; i++) {
+          if (this.grid[i] === -1) continue;
+          this.grid[i].draw(s);
+        }
+      },
     });
 
-    this.canvas.startAnimation();
+    this.canvas.init();
   }
 
-  setup(s) {
-    this.generateGrid(s);
-
-    // get 1st random point
-    const { position, index } = this.getRandomPosition(s);
-  
+  addPoint(point) {
     // add point to grid arrays
-    this.grid[index] = position;
-    this.activePoints.push(position);
-    this.pointsAttempts[index] = 1;
+    this.grid[point.index] = point;
+    this.activePoints.push(point.position);
   }
 
-  draw(s) {
-    if (this.status === 'ready') {
-      for (let i = 0; i < this.grid.length; i++) {
-        if (this.grid[i] === -1) continue;
+  poissonPoints(s) {
+    // add 1st random point
+    const { position, index } = this.getRandomPosition(s);
+    const firstPoint = new Point({ position, index });
+    this.addPoint(firstPoint);
 
-        this.grid[i].x += 1;
-        this.grid[i].y += 1;
-
-        this.drawPoint(s, i);
-      }
-      return
-    }
-
+    // search other points
     while (this.activePoints.length > 0) {
       const randomPointIndex = s.floor(s.random(this.activePoints.length));
       const position = this.activePoints[randomPointIndex];
@@ -75,9 +86,10 @@ export class Poisson {
             for (let j = -1; j <= 1; j++) {
               const neighborIndex = (columnIndex + i) + (rowIndex + j) * this.gridColumns;
               const neighborPoint = this.grid[neighborIndex];
+
               if (neighborPoint === undefined || neighborPoint === -1) continue;
-  
-              const distanceBetweenPoints = p5.Vector.dist(candidate, neighborPoint);
+
+              const distanceBetweenPoints = p5.Vector.dist(candidate, neighborPoint.position);
               if (distanceBetweenPoints < this.radius) {
                 isGoodPoint = false;
               }
@@ -86,9 +98,11 @@ export class Poisson {
   
           if (isGoodPoint) {
             // add new point
-            this.grid[columnIndex + rowIndex * this.gridColumns] = candidate;
-            this.activePoints.push(candidate);
-            this.pointsAttempts[columnIndex + rowIndex * this.gridColumns] = n + 1;
+            const newPoint = new Point({
+              index: columnIndex + rowIndex * this.gridColumns,
+              position: candidate,
+            });
+            this.addPoint(newPoint);
           }
         }
       }
@@ -96,12 +110,6 @@ export class Poisson {
       if (!pointFounded) {
         this.activePoints.splice(randomPointIndex, 1);
       }
-    }
-
-    this.status = 'ready';
-  
-    for (let i = 0; i < this.grid.length; i++) {
-      this.drawPoint(s, i);
     }
   }
 
@@ -112,14 +120,6 @@ export class Poisson {
 
     this.grid.length = this.gridColumns * this.gridRows;
     this.grid.fill(-1);
-  }
-
-  drawPoint(s, i) {
-    if (this.grid[i] === -1) return;
-
-    s.stroke(this.pointsAttempts[i] * 10);
-    s.strokeWeight(5);
-    s.point(this.grid[i].x, this.grid[i].y);
   }
 
   getRandomPosition(s) {
