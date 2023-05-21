@@ -1,41 +1,42 @@
 import p5 from 'p5';
-import { TDCanvas } from './TDCanvas';
-import { Point } from './Point';
-import { Grid } from './Grid';
-
-class Main {
-  constructor() {
-    this.grid = null;
-  }
-}
 
 export class Poisson {
-  constructor() {
-    this.radius = 20;
+  constructor({
+    particleClass,
+    radius,
+    grid,
+  }) {
+    this.radius = radius;
+    this.grid = grid;
 
     this.activePoints = [];
-    this.grid = new Grid({
-      attempts: 25,
-      radius: this.radius,
-    });
 
-    this.canvas = new TDCanvas({
-      setup: (s) => {
-        this.grid.generate(s, this.canvas.width, this.canvas.height);
-        this.poissonPoints(s);
-      },
-      draw: (s) => {
-        for (let i = 0; i < this.grid.points.length; i++) {
-          if (this.grid.points[i] === -1) continue;
-          this.grid.points[i].draw(s);
-        }
-      },
-    });
-
-    this.canvas.init();
+    this._createParticle = ({ position, index, radius }) => {
+      return new particleClass({ position, index, radius });
+    };
   }
 
-  generateNeighbors(s, position) {
+  generatePoints(s, canvasWidth, canvasHeight) {
+    // add 1st random point
+    const { position, index } = this.grid.getRandomPosition(s, canvasWidth, canvasHeight);
+    const firstPoint = this._createParticle({
+      position,
+      index,
+      radius: this.radius,
+    });
+    this.grid.addPoint(firstPoint);
+    this.activePoints.push(firstPoint.position);
+
+    while (this.activePoints.length > 0) {
+      const randomPointIndex = s.floor(s.random(this.activePoints.length));
+      const position = this.activePoints[randomPointIndex];
+
+      this._generateNeighbors(s, position);
+      this.activePoints.splice(randomPointIndex, 1);
+    }
+  }
+
+  _generateNeighbors(s, position) {
     const Candidate = () => {
       const candidate = p5.Vector.random2D();
       const magnitude = s.random(this.radius, this.radius * 2);
@@ -82,7 +83,7 @@ export class Poisson {
 
         if (isGoodPoint) {
           // add new point
-          const newPoint = new Point({
+          const newPoint = this._createParticle({
             index: columnIndex + rowIndex * this.grid.columns,
             position: candidate,
             radius: this.radius,
@@ -93,39 +94,5 @@ export class Poisson {
         }
       }
     }
-  }
-
-  poissonPoints(s) {
-    // add 1st random point
-    const { position, index } = this.getRandomPosition(s);
-    const firstPoint = new Point({
-      position,
-      index,
-      radius: this.radius,
-    });
-    this.grid.addPoint(firstPoint);
-    this.activePoints.push(firstPoint.position);
-
-    while (this.activePoints.length > 0) {
-      const randomPointIndex = s.floor(s.random(this.activePoints.length));
-      const position = this.activePoints[randomPointIndex];
-
-      this.generateNeighbors(s, position);
-      this.activePoints.splice(randomPointIndex, 1);
-    }
-  }
-
-  getRandomPosition(s) {
-    const x = s.random(this.canvas.width);
-    const y = s.random(this.canvas.height);
-    const i = s.floor(x / this.grid.cellWidth);
-    const j = s.floor(y / this.grid.cellWidth);
-    const position = s.createVector(x, y);
-    const cellIndex = i + j * this.grid.columns;
-
-    return {
-      position,
-      index: cellIndex,
-    };
   }
 }

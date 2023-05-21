@@ -27,4 +27,18 @@ export class Grid {
   removePoint(index) {
     this.points.splice(index, 1);
   }
+
+  getRandomPosition(s, width, height) {
+    const x = s.random(width);
+    const y = s.random(height);
+    const i = s.floor(x / this.cellWidth);
+    const j = s.floor(y / this.cellWidth);
+    const position = s.createVector(x, y);
+    const cellIndex = i + j * this.columns;
+
+    return {
+      position,
+      index: cellIndex,
+    };
+  }
 }
